@@ -1,15 +1,24 @@
 "use client";
-
 import { useState } from "react";
+import ImageSearch from "@/components/ImageSearch";
+import ResultsGrid from "@/components/ResultsGrid";
+
+type ProductMatch = {
+  id: string;
+  name: string;
+  image: string;
+  category: string;
+  score: number;
+};
 
 export default function Home() {
   const [imageUrl, setImageUrl] = useState("");
-  const [results, setResults] = useState<any[]>([]);
+  const [results, setResults] = useState<ProductMatch[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSearch = async () => {
-    if (!imageUrl) return;
+  const handleSearch = async (image: string) => {
+    if (!image) return;
 
     setLoading(true);
     setError("");
@@ -21,7 +30,7 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ image: imageUrl }),
+        body: JSON.stringify({ image }),
       });
 
       if (!res.ok) {
@@ -39,54 +48,19 @@ export default function Home() {
 
   return (
     <main style={{ padding: "40px", maxWidth: "800px", margin: "0 auto" }}>
-      <h1>Visual Product Matcher</h1>
+  <h1>Visual Product Matcher</h1>
 
-      <input
-        type="text"
-        placeholder="Paste image URL..."
-        value={imageUrl}
-        onChange={(e) => setImageUrl(e.target.value)}
-        style={{
-          width: "100%",
-          padding: "10px",
-          marginBottom: "10px",
-        }}
-      />
+  <ImageSearch
+    imageUrl={imageUrl}
+    setImageUrl={setImageUrl}
+    onSearch={handleSearch}
+    loading={loading}
+  />
 
-      <button
-        onClick={handleSearch}
-        style={{
-          padding: "10px 20px",
-          cursor: "pointer",
-        }}
-      >
-        Search
-      </button>
+  {error && <p style={{ color: "red" }}>{error}</p>}
 
-      {loading && <p>Loading...</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
+  <ResultsGrid results={results} />
+</main>
 
-      <div style={{ marginTop: "30px" }}>
-        {results.map((product) => (
-          <div
-            key={product.id}
-            style={{
-              border: "1px solid #ccc",
-              padding: "10px",
-              marginBottom: "10px",
-            }}
-          >
-            <img
-              src={product.image}
-              alt={product.name}
-              style={{ width: "100px", marginBottom: "10px" }}
-            />
-            <h3>{product.name}</h3>
-            <p>Category: {product.category}</p>
-            <p>Similarity: {product.score.toFixed(4)}</p>
-          </div>
-        ))}
-      </div>
-    </main>
   );
 }
