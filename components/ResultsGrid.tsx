@@ -21,11 +21,11 @@ export default function ResultsGrid({ results }: ResultsGridProps) {
   };
 
   return (
-    <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {results.map((product) => (
         <div
           key={product.id}
-          className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition duration-200"
+          className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition"
         >
           <img
             src={product.image}
@@ -42,7 +42,7 @@ export default function ResultsGrid({ results }: ResultsGridProps) {
           </p>
 
           <p className="text-sm mt-3 text-gray-600">
-            Confidence:{" "}
+            Confidence{" "}
             <span className="font-medium text-gray-900">
               {getConfidence(product.score)}
             </span>
