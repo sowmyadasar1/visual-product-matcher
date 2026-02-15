@@ -1,36 +1,118 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+###Visual Product Matcher
 
-## Getting Started
+A web application that allows users to upload an image and find visually similar products using image embeddings and cosine similarity.
 
-First, run the development server:
+Live Demo: [https://visual-product-matcher-iota.vercel.app/](https://visual-product-matcher-iota.vercel.app/)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Repository: [https://github.com/sowmyadasar1/visual-product-matcher](https://github.com/sowmyadasar1/visual-product-matcher)
+
+
+##Overview
+
+This project implements a visual similarity search system. Users can upload an image (file or URL), and the system returns visually similar products ranked by similarity score.
+
+The application uses image embeddings to compare products and calculates similarity using cosine similarity. Results can be filtered by confidence level, category, and number of results displayed.
+
+The UI is responsive, includes loading states, and provides basic error handling for a smooth user experience.
+
+
+##Features
+
+- Image upload (file input)
+
+- Image URL input
+
+- Image preview before search
+
+- 55-product dataset with metadata
+
+- Cosine similarity matching
+
+- Confidence labeling (Very High, High, Moderate, Low)
+
+- Category filtering
+
+- Top 5 / Top 10 result selection
+
+- Responsive design (mobile-friendly)
+
+- Loading states and error handling
+
+
+##Tech Stack
+
+- Next.js (App Router)
+
+- React
+
+- TypeScript
+
+- Tailwind CSS
+
+- OpenAI CLIP (for image embeddings)
+
+- Cosine similarity for ranking
+
+
+##How It Works
+
+1. A user uploads an image or provides an image URL.
+
+2. The backend generates an embedding for the query image using a pre-trained model.
+
+3. The query embedding is compared against precomputed product embeddings.
+
+4. Cosine similarity is calculated between vectors.
+
+5. Products are ranked by similarity score.
+
+6. The frontend allows filtering by confidence level, category, and result count.
+
+Confidence levels are derived from similarity thresholds:
+
+- 0.85 → Very High
+
+- 0.75 → High
+
+- 0.60 → Moderate
+
+- ≤ 0.60 → Low
+
+
+##Project Structure
+```
+app/
+  api/match/route.ts
+  page.tsx
+components/
+  ImageSearch.tsx
+  ResultsGrid.tsx
+data/
+  products.json
+lib/
+  similarity.ts
+scripts/
+  generateEmbeddings.ts
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+##Running Locally
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Clone the repository:
+```
+git clone https://github.com/sowmyadasar1/visual-product-matcher.git
+```
 
-## Learn More
+2. Install dependencies:
+```
+npm install
+```
 
-To learn more about Next.js, take a look at the following resources:
+3. Create a .env.local file and add required API keys.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+4. Run the development server:
+```
+npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+5. Open [http://localhost:3000](http://localhost:3000)
