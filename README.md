@@ -1,4 +1,4 @@
-### Visual Product Matcher
+# Visual Product Matcher
 
 A web application that allows users to upload an image and find visually similar products using image embeddings and cosine similarity.
 
