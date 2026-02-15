@@ -1,4 +1,4 @@
-###Visual Product Matcher
+### Visual Product Matcher
 
 A web application that allows users to upload an image and find visually similar products using image embeddings and cosine similarity.
 
@@ -7,7 +7,7 @@ Live Demo: [https://visual-product-matcher-iota.vercel.app/](https://visual-prod
 Repository: [https://github.com/sowmyadasar1/visual-product-matcher](https://github.com/sowmyadasar1/visual-product-matcher)
 
 
-##Overview
+## Overview
 
 This project implements a visual similarity search system. Users can upload an image (file or URL), and the system returns visually similar products ranked by similarity score.
 
@@ -16,7 +16,7 @@ The application uses image embeddings to compare products and calculates similar
 The UI is responsive, includes loading states, and provides basic error handling for a smooth user experience.
 
 
-##Features
+## Features
 
 - Image upload (file input)
 
@@ -39,7 +39,7 @@ The UI is responsive, includes loading states, and provides basic error handling
 - Loading states and error handling
 
 
-##Tech Stack
+## Tech Stack
 
 - Next.js (App Router)
 
@@ -54,7 +54,7 @@ The UI is responsive, includes loading states, and provides basic error handling
 - Cosine similarity for ranking
 
 
-##How It Works
+## How It Works
 
 1. A user uploads an image or provides an image URL.
 
@@ -68,18 +68,19 @@ The UI is responsive, includes loading states, and provides basic error handling
 
 6. The frontend allows filtering by confidence level, category, and result count.
 
-Confidence levels are derived from similarity thresholds:
+- Confidence levels are derived from similarity thresholds:
 
-- 0.85 → Very High
+    - 0.85 → Very High
 
-- 0.75 → High
+    - 0.75 → High
 
-- 0.60 → Moderate
+    - 0.60 → Moderate
 
-- ≤ 0.60 → Low
+    - ≤ 0.60 → Low
 
 
-##Project Structure
+## Project Structure
+
 ```
 app/
   api/match/route.ts
@@ -96,7 +97,7 @@ scripts/
 ```
 
 
-##Running Locally
+## Running Locally
 
 1. Clone the repository:
 ```
