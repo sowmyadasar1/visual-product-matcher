@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 import ImageSearch from "@/components/ImageSearch";
 import ResultsGrid from "@/components/ResultsGrid";
@@ -16,6 +17,7 @@ export default function Home() {
   const [results, setResults] = useState<ProductMatch[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [resultLimit, setResultLimit] = useState(10);
 
   const handleSearch = async (image: string) => {
     if (!image) return;
@@ -46,21 +48,55 @@ export default function Home() {
     }
   };
 
+  const handleClear = () => {
+    setImageUrl("");
+    setResults([]);
+    setError("");
+    setResultLimit(10);
+  };
+
   return (
-    <main style={{ padding: "40px", maxWidth: "800px", margin: "0 auto" }}>
-  <h1>Visual Product Matcher</h1>
+    <main className="min-h-screen bg-gray-50 py-12 px-4">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-4xl font-semibold tracking-tight text-gray-900 text-center mb-2">
+          Visual Product Matcher
+        </h1>
 
-  <ImageSearch
-    imageUrl={imageUrl}
-    setImageUrl={setImageUrl}
-    onSearch={handleSearch}
-    loading={loading}
-  />
+        <p className="text-center text-gray-600 mb-10">
+          Upload an image or paste a URL to find visually similar products.
+        </p>
 
-  {error && <p style={{ color: "red" }}>{error}</p>}
+        <ImageSearch
+          imageUrl={imageUrl}
+          setImageUrl={setImageUrl}
+          onSearch={handleSearch}
+          onClear={handleClear}
+          loading={loading}
+        />
 
-  <ResultsGrid results={results} />
-</main>
+        {error && (
+          <p className="text-red-500 text-center mt-4">{error}</p>
+        )}
 
+        {results.length > 0 && (
+          <div className="flex justify-between items-center mb-6">
+            <p className="text-sm text-gray-600">
+              Showing {Math.min(resultLimit, results.length)} of {results.length} results
+            </p>
+
+            <select
+              value={resultLimit}
+              onChange={(e) => setResultLimit(Number(e.target.value))}
+              className="border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-black"
+            >
+              <option value={5}>Top 5</option>
+              <option value={10}>Top 10</option>
+            </select>
+          </div>
+        )}
+
+        <ResultsGrid results={results.slice(0, resultLimit)} />
+      </div>
+    </main>
   );
 }

@@ -11,25 +11,42 @@ type ResultsGridProps = {
 };
 
 export default function ResultsGrid({ results }: ResultsGridProps) {
+  if (!results.length) return null;
+
+  const getConfidence = (score: number) => {
+    if (score > 0.85) return "Very High";
+    if (score > 0.75) return "High";
+    if (score > 0.6) return "Moderate";
+    return "Low";
+  };
+
   return (
-    <div style={{ marginTop: "30px" }}>
+    <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {results.map((product) => (
         <div
           key={product.id}
-          style={{
-            border: "1px solid #ccc",
-            padding: "10px",
-            marginBottom: "10px",
-          }}
+          className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition duration-200"
         >
           <img
             src={product.image}
             alt={product.name}
-            style={{ width: "100px", marginBottom: "10px" }}
+            className="w-full h-48 object-cover rounded-md mb-3"
           />
-          <h3>{product.name}</h3>
-          <p>Category: {product.category}</p>
-          <p>Similarity: {product.score.toFixed(4)}</p>
+
+          <h3 className="font-semibold text-lg text-gray-900">
+            {product.name}
+          </h3>
+
+          <p className="text-sm text-gray-500 mt-1">
+            {product.category}
+          </p>
+
+          <p className="text-sm mt-3 text-gray-600">
+            Confidence:{" "}
+            <span className="font-medium text-gray-900">
+              {getConfidence(product.score)}
+            </span>
+          </p>
         </div>
       ))}
     </div>
