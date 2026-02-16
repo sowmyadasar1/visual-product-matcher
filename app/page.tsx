@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { pipeline } from "@xenova/transformers";
 import ImageSearch from "@/components/ImageSearch";
 import ResultsGrid from "@/components/ResultsGrid";
 
@@ -11,6 +12,19 @@ type ProductMatch = {
   category: string;
   score: number;
 };
+
+let extractor: any;
+
+async function getExtractor() {
+  if (!extractor) {
+    extractor = await pipeline(
+      "image-feature-extraction",
+      "Xenova/clip-vit-base-patch32"
+    );
+  }
+  return extractor;
+}
+
 
 export default function Home() {
   const [imageUrl, setImageUrl] = useState("");
@@ -30,34 +44,50 @@ export default function Home() {
   };
 
   const handleSearch = async (image: string) => {
-    if (!image) return;
+  if (!image) return;
 
-    setLoading(true);
-    setError("");
-    setResults([]);
+  setLoading(true);
+  setError("");
+  setResults([]);
 
-    try {
-      const res = await fetch("/api/match", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image }),
-      });
+  try {
+    const model = await getExtractor();
 
-      if (!res.ok) {
-        throw new Error("Failed to fetch matches");
-      }
+    let output;
 
-      const data = await res.json();
-      setResults(data);
-      setSearchedImage(image);
-      setConfidenceFilter("All");
-      setCategoryFilter("All");
-    } catch {
-      setError("Something went wrong.");
-    } finally {
-      setLoading(false);
+    if (image.startsWith("data:")) {
+      // File upload (base64)
+      output = await model(image);
+    } else {
+      // Image URL
+      output = await model(image);
     }
-  };
+
+    const embedding = Array.from(output.data);
+
+    const res = await fetch("/api/match", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ embedding }),
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch matches");
+    }
+
+    const data = await res.json();
+    setResults(data);
+    setSearchedImage(image);
+    setConfidenceFilter("All");
+    setCategoryFilter("All");
+  } catch (err) {
+    console.error(err);
+    setError("Something went wrong.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const handleClear = () => {
     setImageUrl("");
