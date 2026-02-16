@@ -6,28 +6,42 @@ export async function embedWithReplicate(image: string) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      version: "4d50797290df5c0e2b6f5f59d9cdd7b8b3dcfa3d9b2c1dcd6f6e8d4e5b3d2e4c",
+      version: "c2c9b29bdfb66d8a9a0e8d8f12d643a4b9d0b9d5d8a9b8c7e6f5d4c3b2a1e0f", 
       input: {
-        image,
+        image: image,
       },
     }),
   });
 
-  const prediction = await response.json();
-  if (!prediction.urls?.get) {
-    throw new Error("Replicate start failed");
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`Replicate API error: ${err}`);
   }
 
+  const prediction = await response.json();
+
+  if (!prediction.urls?.get) {
+    throw new Error("Invalid Replicate response");
+  }
+
+  // Poll until finished
   while (true) {
     const check = await fetch(prediction.urls.get, {
       headers: {
         Authorization: `Token ${process.env.REPLICATE_API_TOKEN}`,
       },
     });
+
     const result = await check.json();
 
-    if (result.status === "succeeded") return result.output;
-    if (result.status === "failed") throw new Error("Embedding failed");
+    if (result.status === "succeeded") {
+      return result.output;
+    }
+
+    if (result.status === "failed") {
+      throw new Error("Embedding failed");
+    }
+
     await new Promise((r) => setTimeout(r, 1000));
   }
 }
