@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 import { cosineSimilarity } from "@/lib/similarity";
+import { embedWithReplicate } from "@/lib/replicateEmbedding";
 
 const productsFilePath = path.join(
   process.cwd(),
@@ -13,13 +14,20 @@ const productsFilePath = path.join(
 
 export async function POST(req: Request) {
   try {
-    const { embedding } = await req.json();
+    const { image } = await req.json();
 
-    if (!embedding) {
+    if (!image) {
       return NextResponse.json(
-        { error: "Embedding required" },
+        { error: "Image required" },
         { status: 400 }
       );
+    }
+
+    // 🔥 Get CLIP embedding from Replicate
+    const queryEmbedding = await embedWithReplicate(image);
+
+    if (!Array.isArray(queryEmbedding) || queryEmbedding.length !== 512) {
+      throw new Error("Invalid embedding returned from Replicate");
     }
 
     const fileData = fs.readFileSync(productsFilePath, "utf-8");
@@ -28,7 +36,7 @@ export async function POST(req: Request) {
     const results = products
       .map((product: any) => ({
         ...product,
-        score: cosineSimilarity(embedding, product.embedding),
+        score: cosineSimilarity(queryEmbedding, product.embedding),
       }))
       .sort((a: any, b: any) => b.score - a.score)
       .slice(0, 10);
