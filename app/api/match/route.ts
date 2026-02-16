@@ -23,7 +23,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔥 Get CLIP embedding from Replicate
     const queryEmbedding = await embedWithReplicate(image);
 
     if (!Array.isArray(queryEmbedding) || queryEmbedding.length !== 512) {
