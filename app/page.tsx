@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { pipeline } from "@xenova/transformers";
 import ImageSearch from "@/components/ImageSearch";
 import ResultsGrid from "@/components/ResultsGrid";
 
@@ -17,6 +16,8 @@ let extractor: any;
 
 async function getExtractor() {
   if (!extractor) {
+    const { pipeline } = await import("@xenova/transformers");
+
     extractor = await pipeline(
       "image-feature-extraction",
       "Xenova/clip-vit-base-patch32"
@@ -24,6 +25,7 @@ async function getExtractor() {
   }
   return extractor;
 }
+
 
 
 export default function Home() {
@@ -62,6 +64,8 @@ export default function Home() {
       // Image URL
       output = await model(image);
     }
+
+    console.log("Image value:", image);
 
     const embedding = Array.from(output.data);
 
