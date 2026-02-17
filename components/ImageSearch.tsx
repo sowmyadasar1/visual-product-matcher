@@ -2,104 +2,87 @@
 
 import { useState, useRef } from "react";
 
-type ImageSearchProps = {
-  imageUrl: string;
-  setImageUrl: (value: string) => void;
-  onSearch: (image: string) => void;
-  onClear: () => void;
-  loading: boolean;
-};
-
-export default function ImageSearch({
-  imageUrl,
-  setImageUrl,
-  onSearch,
-  onClear,
-  loading,
-}: ImageSearchProps) {
+export default function ImageSearch({ onSearch, onClear, loading }: any) {
   const [preview, setPreview] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [url, setUrl] = useState("");
+  const [file, setFile] = useState<File | null>(null);
 
-  const handleFileChange = (file: File) => {
-    const reader = new FileReader();
+  const fileRef = useRef<HTMLInputElement>(null);
 
-    reader.onloadend = () => {
-      const base64 = reader.result as string;
-      setPreview(base64);
-      setImageUrl(base64);
-    };
+  // Handle file selection
+  const handleFilePick = (e: any) => {
+    const selected = e.target.files[0];
+    if (!selected) return;
 
-    reader.readAsDataURL(file);
+    setFile(selected);
+    setUrl("");
+
+    const previewUrl = URL.createObjectURL(selected);
+    setPreview(previewUrl);
+  };
+
+  const handleSearch = () => {
+    if (!file && !url) return;
+    onSearch(file ?? undefined, preview ?? undefined, url);
   };
 
   const handleClear = () => {
     setPreview(null);
-    setImageUrl("");
+    setUrl("");
+    setFile(null);
+    if (fileRef.current) fileRef.current.value = "";
     onClear();
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
   };
 
   return (
-    <div className="mb-8">
+    <div className="bg-white p-6 rounded-xl shadow space-y-4">
+
+      <input hidden type="file" ref={fileRef} onChange={handleFilePick} />
+
+      <button
+        onClick={() => fileRef.current?.click()}
+        className="w-full border border-gray-300 rounded-lg py-2 font-medium hover:bg-gray-50"
+      >
+        Upload Image
+      </button>
+
+      <div className="text-center text-sm text-gray-400">or</div>
+
       <input
-        type="text"
-        placeholder="Paste image URL..."
-        value={imageUrl.startsWith("data:") ? "" : imageUrl}
-        onChange={(e) => setImageUrl(e.target.value)}
-        className="w-full border border-gray-300 text-gray-900 placeholder-gray-400 rounded-md p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-black"
+        value={url}
+        onChange={(e) => {
+          setUrl(e.target.value);
+          setFile(null);
+          setPreview(e.target.value || null);
+        }}
+        placeholder="Paste image URL"
+        className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring"
       />
 
-      <label className="block mb-4">
-        <span className="block mb-2 text-sm font-medium text-gray-700">
-          Upload Image
-        </span>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={(e) => {
-            if (e.target.files && e.target.files[0]) {
-              handleFileChange(e.target.files[0]);
-            }
-          }}
-          className="block w-full text-sm text-gray-900
-                     file:mr-4 file:py-2 file:px-4
-                     file:rounded-md file:border-0
-                     file:text-sm file:font-medium
-                     file:bg-black file:text-white
-                     hover:file:bg-gray-800"
-        />
-      </label>
-
       {preview && (
-        <div className="mb-4">
-          <img
-            src={preview}
-            alt="Preview"
-            className="w-40 rounded-md border border-gray-200 shadow-sm"
-          />
-        </div>
+        <img
+          src={preview}
+          className="w-full max-h-64 object-contain rounded border"
+        />
       )}
 
-      <div className="flex gap-3">
+      <div className="flex gap-3 pt-2">
         <button
-          onClick={() => onSearch(imageUrl)}
-          disabled={loading || !imageUrl}
-          className="flex-1 bg-black text-white py-3 rounded-md hover:bg-gray-800 transition disabled:opacity-50"
+          disabled={loading}
+          onClick={handleSearch}
+          className="flex-1 bg-black text-white rounded-lg py-2 hover:bg-gray-800 disabled:opacity-50"
         >
-          {loading ? "Searching..." : "Search"}
+          Search
         </button>
 
         <button
           onClick={handleClear}
-          className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-md hover:bg-gray-100 transition"
+          className="flex-1 border rounded-lg py-2 hover:bg-gray-50"
         >
           Clear
         </button>
       </div>
+
     </div>
   );
 }

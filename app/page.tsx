@@ -12,24 +12,7 @@ type ProductMatch = {
   score: number;
 };
 
-let extractor: any;
-
-async function getExtractor() {
-  if (!extractor) {
-    const { pipeline } = await import("@xenova/transformers");
-
-    extractor = await pipeline(
-      "image-feature-extraction",
-      "Xenova/clip-vit-base-patch32"
-    );
-  }
-  return extractor;
-}
-
-
-
 export default function Home() {
-  const [imageUrl, setImageUrl] = useState("");
   const [results, setResults] = useState<ProductMatch[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -37,6 +20,7 @@ export default function Home() {
   const [searchedImage, setSearchedImage] = useState<string | null>(null);
   const [confidenceFilter, setConfidenceFilter] = useState("All");
   const [categoryFilter, setCategoryFilter] = useState("All");
+  const [threshold, setThreshold] = useState(0.2);
 
   const getConfidence = (score: number) => {
     if (score > 0.85) return "Very High";
@@ -45,56 +29,39 @@ export default function Home() {
     return "Low";
   };
 
-  const handleSearch = async (image: string) => {
-  if (!image) return;
+  const handleSearch = async (file?: File, previewUrl?: string, url?: string) => {
+    setLoading(true);
+    setError("");
+    setResults([]);
 
-  setLoading(true);
-  setError("");
-  setResults([]);
+    try {
+      const formData = new FormData();
+      if (file) formData.append("file", file);
+      if (url) formData.append("url", url);
 
-  try {
-    const model = await getExtractor();
+      const res = await fetch("/api/match", {
+        method: "POST",
+        body: formData,
+      });
 
-    let output;
+      const data = await res.json();
 
-    if (image.startsWith("data:")) {
-      // File upload (base64)
-      output = await model(image);
-    } else {
-      // Image URL
-      output = await model(image);
+      if (!res.ok || !Array.isArray(data)) {
+        throw new Error(typeof data.error === "string" ? data.error : "Search failed");
+      }
+
+      setResults(data);
+      if (previewUrl) setSearchedImage(previewUrl);
+      setConfidenceFilter("All");
+      setCategoryFilter("All");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-
-    console.log("Image value:", image);
-
-    const embedding = Array.from(output.data);
-
-    const res = await fetch("/api/match", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ embedding }),
-    });
-
-    if (!res.ok) {
-      throw new Error("Failed to fetch matches");
-    }
-
-    const data = await res.json();
-    setResults(data);
-    setSearchedImage(image);
-    setConfidenceFilter("All");
-    setCategoryFilter("All");
-  } catch (err) {
-    console.error(err);
-    setError("Something went wrong.");
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const handleClear = () => {
-    setImageUrl("");
     setResults([]);
     setError("");
     setResultLimit(10);
@@ -108,97 +75,113 @@ export default function Home() {
   }, [results]);
 
   const filteredResults = results
-    .filter((product) => {
-      if (confidenceFilter === "All") return true;
-      return getConfidence(product.score) === confidenceFilter;
-    })
-    .filter((product) => {
-      if (categoryFilter === "All") return true;
-      return product.category === categoryFilter;
-    });
+    .filter(r => r.score >= threshold)
+    .filter(r => confidenceFilter === "All" || getConfidence(r.score) === confidenceFilter)
+    .filter(r => categoryFilter === "All" || r.category === categoryFilter);
 
   return (
-    <main className="min-h-screen bg-gray-50 py-12 px-4">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-semibold tracking-tight text-gray-900 text-center mb-2">
-          Visual Product Matcher
-        </h1>
+    <main className="min-h-screen bg-slate-50 py-12 px-6 text-slate-900">
+      <div className="max-w-5xl mx-auto space-y-10">
 
-        <p className="text-center text-gray-600 mb-10">
-          Upload an image or paste a URL to find visually similar products.
-        </p>
+        {/* Header */}
+        <header className="text-center space-y-3">
+          <h1 className="text-4xl font-bold tracking-tight">
+            Visual Product Matcher
+          </h1>
+          <p className="text-slate-600 text-lg">
+            Upload an image or paste a URL to discover visually similar products.
+          </p>
+        </header>
 
-        <ImageSearch
-          imageUrl={imageUrl}
-          setImageUrl={setImageUrl}
-          onSearch={handleSearch}
-          onClear={handleClear}
-          loading={loading}
-        />
+        <ImageSearch onSearch={handleSearch} onClear={handleClear} loading={loading} />
 
-        {error && (
-          <p className="text-red-500 text-center mt-4">{error}</p>
-        )}
+        {error && <p className="text-red-600 text-center">{error}</p>}
+        {loading && <p className="text-center text-slate-500">Searching…</p>}
 
-        {results.length > 0 && searchedImage && (
-          <div className="mb-8 flex items-center gap-4">
-            <img
-              src={searchedImage}
-              alt="Search query"
-              className="w-20 h-20 object-cover rounded-md border border-gray-200"
-            />
-            <div>
-              <p className="text-sm text-gray-500">Search results</p>
-              <p className="text-gray-900 font-medium">
-                Showing {Math.min(resultLimit, filteredResults.length)} similar products
-              </p>
-
-            </div>
-          </div>
-        )}
-
+        {/* Results Summary */}
         {results.length > 0 && (
-          <div className="flex flex-wrap gap-3 justify-between items-center mb-6">
-            <p className="text-sm text-gray-600">
-              Displaying {Math.min(resultLimit, filteredResults.length)} of {filteredResults.length}
-            </p>
+          <div className="bg-white border rounded-xl p-4 shadow-sm flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              {searchedImage && (
+                <img
+                  src={searchedImage}
+                  className="w-14 h-14 rounded object-cover border"
+                />
+              )}
 
-            <div className="flex gap-3 flex-wrap">
-              <select
-                value={resultLimit}
-                onChange={(e) => setResultLimit(Number(e.target.value))}
-                className="border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-black"
-              >
-                <option value={5}>Top 5</option>
-                <option value={10}>Top 10</option>
-              </select>
-
-              <select
-                value={confidenceFilter}
-                onChange={(e) => setConfidenceFilter(e.target.value)}
-                className="border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-black"
-              >
-                <option value="All">All Confidence</option>
-                <option value="Very High">Very High</option>
-                <option value="High">High</option>
-              </select>
-
-              <select
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                className="border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-black"
-              >
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
+              <div>
+                <p className="text-sm text-slate-500">Matches Found</p>
+                <p className="font-semibold text-lg">
+                  Showing {Math.min(resultLimit, filteredResults.length)} of {filteredResults.length}
+                </p>
+              </div>
             </div>
           </div>
+        )}
+
+        {/* Filters */}
+        {results.length > 0 && (
+          <div className="bg-white border rounded-xl p-4 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-4">
+
+            <select
+              value={resultLimit}
+              onChange={e => setResultLimit(Number(e.target.value))}
+              className="border rounded-lg px-3 py-2"
+            >
+              <option value={5}>Show 5 results</option>
+              <option value={10}>Show 10 results</option>
+              <option value={20}>Show 20 results</option>
+            </select>
+
+            <select
+              value={confidenceFilter}
+              onChange={e => setConfidenceFilter(e.target.value)}
+              className="border rounded-lg px-3 py-2"
+            >
+              <option value="All">All confidence levels</option>
+              <option value="Very High">Very high confidence</option>
+              <option value="High">High confidence</option>
+              <option value="Moderate">Moderate confidence</option>
+              <option value="Low">Low confidence</option>
+            </select>
+
+            <select
+              value={categoryFilter}
+              onChange={e => setCategoryFilter(e.target.value)}
+              className="border rounded-lg px-3 py-2"
+            >
+              <option value="All">All product categories</option>
+              {categories.filter(c => c !== "All").map(c => (
+                <option key={c}>{c}</option>
+              ))}
+            </select>
+
+            <div>
+              <label className="text-sm font-medium block mb-1">
+                Minimum similarity ({(threshold * 100).toFixed(0)}%)
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={threshold}
+                onChange={e => setThreshold(Number(e.target.value))}
+                className="w-full"
+              />
+            </div>
+
+          </div>
+        )}
+
+        {!loading && filteredResults.length === 0 && results.length > 0 && (
+          <p className="text-center text-slate-500">
+            No products match the current filters.
+          </p>
         )}
 
         <ResultsGrid results={filteredResults.slice(0, resultLimit)} />
+
       </div>
     </main>
   );

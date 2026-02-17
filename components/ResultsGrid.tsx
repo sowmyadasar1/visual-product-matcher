@@ -21,7 +21,7 @@ export default function ResultsGrid({ results }: ResultsGridProps) {
   };
 
   return (
-    <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {results.map((product) => (
         <div
           key={product.id}
@@ -41,12 +41,21 @@ export default function ResultsGrid({ results }: ResultsGridProps) {
             {product.category}
           </p>
 
-          <p className="text-sm mt-3 text-gray-600">
-            Confidence{" "}
-            <span className="font-medium text-gray-900">
-              {getConfidence(product.score)}
-            </span>
-          </p>
+          <div className="mt-3 space-y-1">
+            <p className="text-sm text-gray-600">
+              Confidence:{" "}
+              <span className="font-medium text-gray-900">
+                {getConfidence(product.score)}
+              </span>
+            </p>
+
+            <p className="text-sm text-gray-600">
+              Similarity:{" "}
+              <span className="font-medium text-gray-900">
+                {(product.score * 100).toFixed(1)}%
+              </span>
+            </p>
+          </div>
         </div>
       ))}
     </div>
