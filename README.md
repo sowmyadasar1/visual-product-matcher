@@ -1,119 +1,182 @@
 # Visual Product Matcher
 
-A web application that allows users to upload an image and find visually similar products using image embeddings and cosine similarity.
+A full-stack AI application that finds visually similar products from a catalog using image embeddings and cosine similarity.
 
-Live Demo: [https://visual-product-matcher-iota.vercel.app/](https://visual-product-matcher-iota.vercel.app/)
+Users can upload an image (or provide an image URL) and instantly receive ranked product matches with similarity scores, confidence levels, and filtering options.
 
-Repository: [https://github.com/sowmyadasar1/visual-product-matcher](https://github.com/sowmyadasar1/visual-product-matcher)
+This project demonstrates:
 
+- Image embedding–based visual search
+- Similarity ranking with cosine distance
+- Modern Next.js App Router
+- Server-side ML inference (Xenova + ONNX)
+- Production deployment via Docker
 
-## Overview
+---
 
-This project implements a visual similarity search system. Users can upload an image (file or URL), and the system returns visually similar products ranked by similarity score.
+## Approach
 
-The application uses image embeddings to compare products and calculates similarity using cosine similarity. Results can be filtered by confidence level, category, and number of results displayed.
+This project was designed as an end-to-end visual similarity search system using modern full-stack practices. The frontend is built with Next.js and React, providing a clean, responsive interface for image upload, URL input, and result filtering. When a user submits an image, it is converted to base64 and sent to a server-side API.
 
-The UI is responsive, includes loading states, and provides basic error handling for a smooth user experience.
+On the backend, a vision embedding model generates a numerical representation of the query image. Precomputed embeddings for all products are loaded from a local JSON dataset. Cosine similarity is then used to compare the query embedding with each product embedding, producing ranked matches based on visual closeness.
 
+Results are returned to the frontend, where users can refine them using confidence levels, category filters, similarity thresholds, and result limits. The application is containerized with Docker to support native ONNX inference and deployed on Railway for production. This architecture demonstrates practical AI integration, efficient similarity search, and a user-focused interface suitable for real-world visual discovery systems.
+
+---
 
 ## Features
 
-- Image upload (file input)
-
-- Image URL input
-
-- Image preview before search
-
-- 55-product dataset with metadata
-
-- Cosine similarity matching
-
-- Confidence labeling (Very High, High, Moderate, Low)
-
+- Upload image or paste image URL
+- AI-powered visual similarity matching
+- Similarity score + confidence labels
 - Category filtering
+- Minimum similarity slider
+- Result limits (Top 5 / 10 / 20)
+- Clean responsive UI
+- Server-side inference
+- Dockerized deployment
 
-- Top 5 / Top 10 result selection
+---
 
-- Responsive design (mobile-friendly)
+## How It Works
 
-- Loading states and error handling
+1. User uploads an image (or provides a URL)
+2. Image is converted to base64
+3. A vision embedding model generates a vector representation
+4. Product embeddings are loaded from `products.json`
+5. Cosine similarity is computed between query and catalog embeddings
+6. Results are ranked and returned to the frontend
+7. UI displays matches with filters and scores
 
+---
 
 ## Tech Stack
 
 - Next.js (App Router)
-
-- React
-
-- TypeScript
-
+- React + TypeScript
 - Tailwind CSS
+- Xenova Transformers
+- ONNX Runtime
+- Node.js
+- Docker
+- Railway (deployment)
 
-- OpenAI CLIP (for image embeddings)
-
-- Cosine similarity for ranking
-
-
-## How It Works
-
-1. A user uploads an image or provides an image URL.
-
-2. The backend generates an embedding for the query image using a pre-trained model.
-
-3. The query embedding is compared against precomputed product embeddings.
-
-4. Cosine similarity is calculated between vectors.
-
-5. Products are ranked by similarity score.
-
-6. The frontend allows filtering by confidence level, category, and result count.
-
-- Confidence levels are derived from similarity thresholds:
-
-    - 0.85 → Very High
-
-    - 0.75 → High
-
-    - 0.60 → Moderate
-
-    - ≤ 0.60 → Low
-
+---
 
 ## Project Structure
 
 ```
 app/
-  api/match/route.ts
-  page.tsx
+├ api/match/route.ts # Image matching API
+├ page.tsx # Main UI
+
 components/
-  ImageSearch.tsx
-  ResultsGrid.tsx
-data/
-  products.json
+├ ImageSearch.tsx
+├ ResultsGrid.tsx
+
 lib/
-  similarity.ts
-scripts/
-  generateEmbeddings.ts
+├ serverEmbedding.ts
+├ similarity.ts
+
+data/
+├ products.json
+
+Dockerfile
 ```
 
 
-## Running Locally
+---
 
-1. Clone the repository:
-```
-git clone https://github.com/sowmyadasar1/visual-product-matcher.git
-```
+## Local Development
 
-2. Install dependencies:
+### 1. Install dependencies
+
 ```
 npm install
 ```
 
-3. Create a .env.local file and add required API keys.
-
-4. Run the development server:
+### 2. Run dev server
 ```
 npm run dev
 ```
 
-5. Open [http://localhost:3000](http://localhost:3000)
+
+---
+
+## 🐳 Docker Build
+```
+docker build -t visual-product-matcher .
+docker run -p 3000:3000 visual-product-matcher
+```
+
+
+---
+
+## Production Deployment
+
+This project is deployed using Docker on Railway to support native ONNX runtime.
+
+Steps:
+
+1. Push project to GitHub
+
+2. Add Dockerfile (already included)
+
+3. Create Railway project from GitHub repo
+
+4. Railway automatically builds + deploys
+
+5. Open generated 
+
+
+---
+
+## API Endpoint
+POST /api/match
+
+Accepts:
+
+- Multipart file upload (file)
+
+- OR image URL (url)
+
+Returns:
+```
+[
+  {
+    "id": "1",
+    "name": "Product Name",
+    "image": "/image.jpg",
+    "category": "Shoes",
+    "score": 0.82
+  }
+]
+```
+
+
+---
+
+## Similarity Scoring
+
+Confidence levels:
+
+- Very High: > 0.85
+
+- High: > 0.75
+
+- Moderate: > 0.60
+
+- Low: ≤ 0.60
+
+
+---
+
+## Error Handling
+
+- Prevents empty requests
+
+- Supports file OR URL
+
+- Server always returns JSON
+
+- Graceful frontend error messages
