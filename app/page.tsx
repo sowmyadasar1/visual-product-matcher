@@ -30,44 +30,51 @@ export default function Home() {
   };
 
   const handleSearch = async (file?: File, previewUrl?: string, url?: string) => {
-    setLoading(true);
-    setError("");
-    setResults([]);
+  // ⛔ Prevent empty requests (THIS fixes 400)
+  if (!file && !url) {
+    setError("Please upload an image or provide a URL.");
+    return;
+  }
+
+  setLoading(true);
+  setError("");
+  setResults([]);
+
+  try {
+    const formData = new FormData();
+    if (file) formData.append("file", file);
+    if (url) formData.append("url", url);
+
+    const res = await fetch("/api/match", {
+      method: "POST",
+      body: formData,
+      cache: "no-store",
+    });
+
+    let data;
 
     try {
-      const formData = new FormData();
-      if (file) formData.append("file", file);
-      if (url) formData.append("url", url);
-
-      const res = await fetch("/api/match", {
-        method: "POST",
-        body: formData,
-        cache: "no-store",
-      });
-
-      let data;
-
-      try {
-        data = await res.json();
-      } catch {
-        throw new Error("Server returned empty response.");
-      }
-
-if (!res.ok || !Array.isArray(data)) {
-  throw new Error(data?.error || "Search failed.");
-}
-
-
-      setResults(data);
-      if (previewUrl) setSearchedImage(previewUrl);
-      setConfidenceFilter("All");
-      setCategoryFilter("All");
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+      data = await res.json();
+    } catch {
+      throw new Error("Server returned empty response.");
     }
-  };
+
+    if (!res.ok || !Array.isArray(data)) {
+      throw new Error(data?.error || "Search failed.");
+    }
+
+    setResults(data);
+    if (previewUrl) setSearchedImage(previewUrl);
+    setConfidenceFilter("All");
+    setCategoryFilter("All");
+
+  } catch (err: any) {
+    setError(err.message || "Something went wrong.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const handleClear = () => {
     setResults([]);
