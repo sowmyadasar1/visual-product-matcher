@@ -44,11 +44,18 @@ export default function Home() {
         body: formData,
       });
 
-      const data = await res.json();
+      let data;
 
-      if (!res.ok || !Array.isArray(data)) {
-        throw new Error(typeof data.error === "string" ? data.error : "Search failed");
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error("Server returned empty response.");
       }
+
+if (!res.ok || !Array.isArray(data)) {
+  throw new Error(data?.error || "Search failed.");
+}
+
 
       setResults(data);
       if (previewUrl) setSearchedImage(previewUrl);

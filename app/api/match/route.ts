@@ -54,7 +54,14 @@ export async function POST(req: Request) {
 
     return NextResponse.json(results);
   } catch (e: any) {
-    console.error(e);
-    return NextResponse.json({ error: e.message }, { status: 500 });
-  }
+  console.error("MATCH API ERROR:", e);
+
+  return NextResponse.json(
+    {
+      error: "Image processing failed",
+      details: e?.message || "Unknown error"
+    },
+    { status: 500 }
+  );
+}
 }
