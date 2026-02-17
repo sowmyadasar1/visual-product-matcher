@@ -8,41 +8,47 @@ import { embedImage } from "@/lib/serverEmbedding";
 
 const productsFilePath = path.join(process.cwd(), "data", "products.json");
 
-/* ---------------- GET (health check) ---------------- */
-
+/* Health check */
 export async function GET() {
   return NextResponse.json({ status: "ok" });
 }
 
-/* ---------------- POST ---------------- */
-
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
-    const file = formData.get("file") as File;
 
-    if (!file) {
+    const file = formData.get("file") as File | null;
+    const url = formData.get("url") as string | null;
+
+    let base64: string | null = null;
+
+    /* ---------------- FILE UPLOAD ---------------- */
+
+    if (file) {
+      const buffer = Buffer.from(await file.arrayBuffer());
+      base64 = buffer.toString("base64");
+    }
+
+    /* ---------------- IMAGE URL ---------------- */
+
+    if (!base64 && url) {
+      const response = await fetch(url);
+      const buffer = Buffer.from(await response.arrayBuffer());
+      base64 = buffer.toString("base64");
+    }
+
+    if (!base64) {
       return NextResponse.json(
-        { error: "File required" },
+        { error: "Image file or URL required" },
         { status: 400 }
       );
     }
-
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const base64 = buffer.toString("base64");
 
     const embedding = await embedImage(base64);
 
     const products = JSON.parse(
       fs.readFileSync(productsFilePath, "utf8")
     );
-
-    if (!products.length) {
-      throw new Error("No products found");
-    }
-
-    console.log("Query embedding:", embedding.length);
-    console.log("Product embedding:", products[0].embedding.length);
 
     const results = products
       .map((p: any) => ({
