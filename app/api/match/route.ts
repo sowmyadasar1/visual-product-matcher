@@ -8,42 +8,41 @@ import { embedImage } from "@/lib/serverEmbedding";
 
 const productsFilePath = path.join(process.cwd(), "data", "products.json");
 
+/* ---------------- GET (health check) ---------------- */
+
+export async function GET() {
+  return NextResponse.json({ status: "ok" });
+}
+
+/* ---------------- POST ---------------- */
+
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
+    const file = formData.get("file") as File;
 
-    const file = formData.get("file") as File | null;
-    const url = formData.get("url") as string | null;
-
-    if (!file && !url) {
-      return NextResponse.json({ error: "Image required" }, { status: 400 });
+    if (!file) {
+      return NextResponse.json(
+        { error: "File required" },
+        { status: 400 }
+      );
     }
 
-    let base64: string;
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const base64 = buffer.toString("base64");
 
-    // FILE upload
-    if (file) {
-      const arrayBuffer = await file.arrayBuffer();
-      base64 = Buffer.from(arrayBuffer).toString("base64");
-    }
-
-    // URL upload
-    else {
-      const res = await fetch(url!);
-      if (!res.ok) throw new Error("Unable to fetch image URL");
-
-      const buffer = await res.arrayBuffer();
-      base64 = Buffer.from(buffer).toString("base64");
-    }
-
-    // Generate embedding
     const embedding = await embedImage(base64);
 
-    // Load products
-    const products = JSON.parse(fs.readFileSync(productsFilePath, "utf8"));
+    const products = JSON.parse(
+      fs.readFileSync(productsFilePath, "utf8")
+    );
 
-    console.log("Query embedding length:", embedding.length);
-    console.log("Product embedding length:", products[0].embedding.length);
+    if (!products.length) {
+      throw new Error("No products found");
+    }
+
+    console.log("Query embedding:", embedding.length);
+    console.log("Product embedding:", products[0].embedding.length);
 
     const results = products
       .map((p: any) => ({
@@ -53,15 +52,16 @@ export async function POST(req: Request) {
       .sort((a: any, b: any) => b.score - a.score);
 
     return NextResponse.json(results);
-  } catch (e: any) {
-  console.error("MATCH API ERROR:", e);
 
-  return NextResponse.json(
-    {
-      error: "Image processing failed",
-      details: e?.message || "Unknown error"
-    },
-    { status: 500 }
-  );
-}
+  } catch (e: any) {
+    console.error("MATCH API ERROR:", e);
+
+    return NextResponse.json(
+      {
+        error: "Processing failed",
+        details: e?.message || "Unknown",
+      },
+      { status: 500 }
+    );
+  }
 }

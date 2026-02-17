@@ -42,6 +42,7 @@ export default function Home() {
       const res = await fetch("/api/match", {
         method: "POST",
         body: formData,
+        cache: "no-store",
       });
 
       let data;
