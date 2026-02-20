@@ -10,7 +10,7 @@ This project demonstrates:
 - Similarity ranking with cosine distance
 - Modern Next.js App Router
 - Server-side ML inference (Xenova + ONNX)
-- Production deployment via Docker
+- Production deployment
 
 ---
 
